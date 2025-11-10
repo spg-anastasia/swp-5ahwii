@@ -1,0 +1,11 @@
+{
+  "tasks": {
+   "seed": "deno run -A prisma/seed.ts",
+    "dev": "deno run --allow-net --allow-read main.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1",
+      "@prisma/client": "npm:@prisma/client@^6.17.1",
+      "prisma": "npm:prisma@^6.17.1"
+  }
+}
