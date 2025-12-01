@@ -7,33 +7,64 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <h1>Trivia Fragen</h1>
 
-    <form id="queryForm">
-        <label>Difficulty:
-            <select id="difficulty">
-                <option value="easy">easy</option>
-                <option value="medium">medium</option>
-                <option value="hard">hard</option>
-            </select>
-        </label>
+<h1>Trivia Fragen</h1>
 
-        <label>Category:
-            <input id="category" placeholder="Sports" />
-        </label>
+<form id="queryForm">
+    <label>Difficulty:
+        <select id="difficulty">
+            <option value="easy">easy</option>
+            <option value="medium">medium</option>
+            <option value="hard">hard</option>
+        </select>
+    </label>
 
-        <label>Amount:
-            <input id="amount" type="number" value="1" min="1" max="50" />
-        </label>
+    <label>Category:
+        <select id="category">
+            <option>Lade Kategorien...</option>
+        </select>
+    </label>
 
-        <button type="submit">Laden</button>
-    </form>
+    <label>Amount:
+        <input id="amount" type="number" value="1" min="1" max="50" />
+    </label>
 
-    <div id="output"></div>
+    <button type="submit">Laden</button>
+</form>
+
+<div id="output"></div>
 
 <script>
+// --- Kategorien laden ---
+async function loadCategories() {
+    const select = document.getElementById("category");
+
+    try {
+        const res = await fetch("/categories");
+        const data = await res.json();
+
+        select.innerHTML = "";
+
+        data.forEach(cat => {
+            const opt = document.createElement("option");
+            opt.value = cat.name;
+            opt.textContent = cat.name;
+            select.appendChild(opt);
+        });
+
+    } catch (err) {
+        select.innerHTML = "<option>Fehler</option>";
+    }
+}
+loadCategories();
+
+
+// --- LOGIK FÜR FRAGEN ---
 const form = document.getElementById("queryForm");
 const output = document.getElementById("output");
+
+let currentIndex = 0;
+let questions = [];
 
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -43,9 +74,10 @@ form.addEventListener("submit", async (e) => {
     const amount = document.getElementById("amount").value;
 
     output.innerHTML = "<p>Loading...</p>";
+    currentIndex = 0;
 
     try {
-        const res = await fetch(`http://localhost:5000/questions?difficulty=${difficulty}&category=${category}&amount=${amount}`);
+        const res = await fetch(`/questions?difficulty=${difficulty}&category=${category}&amount=${amount}`);
         const data = await res.json();
 
         if (!Array.isArray(data)) {
@@ -53,7 +85,9 @@ form.addEventListener("submit", async (e) => {
             return;
         }
 
-        renderQuestions(data);
+        questions = data;
+        showQuestion();
+
     } catch (err) {
         output.innerHTML = `<p>Fehler: ${err}</p>`;
     }
@@ -63,33 +97,71 @@ function shuffle(arr) {
     return arr.sort(() => Math.random() - 0.5);
 }
 
-function renderQuestions(questions) {
+function showQuestion() {
+
+    if (currentIndex >= questions.length) {
+        showFinishScreen();
+        return;
+    }
+
+    const q = questions[currentIndex];
     output.innerHTML = "";
 
-    questions.forEach((q, idx) => {
-        const block = document.createElement("div");
-        block.className = "question-block";
+    const block = document.createElement("div");
+    block.className = "question-block";
 
-        const answers = shuffle([q.correct_answer.answer, ...q.incorrect_answers.map(a => a.answer)]);
+    const answers = shuffle([q.correct_answer.answer, ...q.incorrect_answers.map(a => a.answer)]);
 
-        block.innerHTML = `
-            <h2>Frage ${idx + 1}</h2>
-            <p>${q.question}</p>
-            <div class="answers">
-                ${answers.map(a => `<button class='answer-btn' data-correct='${a === q.correct_answer.answer}'>${a}</button>`).join("")}
-            </div>
-        `;
+    block.innerHTML = `
+        <h2>Frage ${currentIndex + 1} von ${questions.length}</h2>
+        <p>${q.question}</p>
+        <div class="answers">
+            ${answers.map(a => `<button class='answer-btn' data-correct='${a === q.correct_answer.answer}'>${a}</button>`).join("")}
+        </div>
+        <p id="feedback" style="font-weight: bold; margin-top: 15px;"></p>
+    `;
 
-        output.appendChild(block);
-    });
+    output.appendChild(block);
 
     document.querySelectorAll(".answer-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const correct = btn.dataset.correct === "true";
-            btn.classList.add(correct ? "correct" : "wrong");
-        });
+        btn.addEventListener("click", () => handleAnswer(btn));
     });
 }
+
+function handleAnswer(btn) {
+    const correct = btn.dataset.correct === "true";
+    const feedback = document.getElementById("feedback");
+
+    if (correct) {
+        btn.classList.add("correct");
+        feedback.textContent = "Richtig! 🎉";
+        feedback.style.color = "green";
+    } else {
+        btn.classList.add("wrong");
+        feedback.textContent = "Falsch ❌";
+        feedback.style.color = "red";
+    }
+
+    document.querySelectorAll(".answer-btn").forEach(b => b.disabled = true);
+
+    setTimeout(() => {
+        currentIndex++;
+        showQuestion();
+    }, 1200);
+}
+
+function showFinishScreen() {
+    output.innerHTML = `
+        <h2>Alle Fragen beantwortet!</h2>
+        <button id="restartBtn">Neu starten</button>
+    `;
+
+    document.getElementById("restartBtn").onclick = () => {
+        output.innerHTML = "";
+        form.reset();
+    };
+}
 </script>
+
 </body>
 </html>
