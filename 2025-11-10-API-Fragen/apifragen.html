@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unsere Trivia API</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <header>
+        <h1>Unsere Trivia‑API</h1>
+    </header>
+
+    <section class="query-box">
+        <h2>Fragen abrufen</h2>
+        <form id="queryForm">
+            <label>
+                Schwierigkeit:
+                <select name="difficulty" id="difficulty">
+                    <option value="easy">easy</option>
+                    <option value="medium">medium</option>
+                    <option value="hard">hard</option>
+                </select>
+            </label>
+
+            <label>
+                Kategorie:
+                <input type="text" id="category" name="category" placeholder="z.B. Sports" required />
+            </label>
+
+            <label>
+                Anzahl:
+                <input type="number" id="amount" name="amount" value="3" min="1" />
+            </label>
+
+            <button type="submit">Senden</button>
+        </form>
+    </section>
+
+    <section id="results" class="results"></section>
+
+    <script>
+        const form = document.getElementById("queryForm");
+        const resultsBox = document.getElementById("results");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const difficulty = document.getElementById("difficulty").value;
+            const category = document.getElementById("category").value;
+            const amount = document.getElementById("amount").value;
+
+            const url = `http://localhost:5000/questions?difficulty=${difficulty}&category=${encodeURIComponent(category)}&amount=${amount}`;
+
+            resultsBox.innerHTML = "<p>Lade...</p>";
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.error) {
+                    resultsBox.innerHTML = `<p class='error'>Fehler: ${data.error}</p>`;
+                    return;
+                }
+
+                if (!Array.isArray(data)) {
+                    resultsBox.innerHTML = `<p class='error'>Keine Daten erhalten.</p>`;
+                    return;
+                }
+
+                resultsBox.innerHTML = data
+                    .map(q => `
+                        <div class="question-card">
+                            <h3>${q.question}</h3>
+                            <p><strong>Richtige Antwort:</strong> ${q.correct_answer.answer}</p>
+                            <p><strong>Falsche Antworten:</strong> ${q.incorrect_answers.map(a => a.answer).join(", ")}</p>
+                        </div>
+                    `)
+                    .join("");
+            } catch (err) {
+                resultsBox.innerHTML = `<p class='error'>Fehler bei der Anfrage.</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
