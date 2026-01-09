@@ -11,11 +11,11 @@ generator client {
 
 model Question {
     id                String     @id @default(cuid())
-    difficulty        Difficulty @relation(fields: [difficultyId], references: [id])
-    category          Category   @relation(fields: [categoryId], references: [id])
+    difficulty        Difficulty @relation(fields: [difficultyId], references: [id]) // Relation to Difficulty n:1
+    category          Category   @relation(fields: [categoryId], references: [id]) // Relation to Category n:1
     question          String
     incorrect_answers Answer[]   @relation(name: "IncorrectAnswers")
-    correct_answer    Answer     @relation(name: "CorrectAnswer", fields: [correct_answer_id], references: [id])
+    correct_answer    Answer     @relation(name: "CorrectAnswer", fields: [correct_answer_id], references: [id]) // Relation to Correct Answer
     correct_answer_id String
     difficultyId      String
     categoryId        String
@@ -24,7 +24,7 @@ model Question {
 }
 
 model Type {
-    id       String     @id @default(cuid())
+    id       String     @id @default(cuid()) 
     type     String     @unique
     Question Question[]
 }
@@ -45,6 +45,6 @@ model Difficulty {
 model Answer {
     id                     String     @id @default(cuid())
     answer                 String
-    incorrect_in_questions Question[] @relation(name: "IncorrectAnswers")
+    incorrect_in_questions Question[] @relation(name: "IncorrectAnswers") 
     correct_in_questions   Question[] @relation(name: "CorrectAnswer")
 }
