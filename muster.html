@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Zellulärer Automat - Muster-Editor</title>
+    <style>
+        body { background: #222; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
+        canvas { border: 2px solid #555; background: #fff; cursor: crosshair; image-rendering: pixelated; }
+        .controls { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; }
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; font-size: 14px; }
+        #startBtn { background: #2ecc71; color: white; }
+        #startBtn.running { background: #e74c3c; }
+        .reset-btn { background: #95a5a6; color: white; }
+        .status { font-style: italic; color: #aaa; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>1. Muster zeichnen & 2. Start drücken</h2>
+    
+    <div class="status" id="statusText">Modus: Editor (Klicke auf die Zellen)</div>
+
+    <div class="controls">
+        <button id="startBtn">Simulation Starten</button>
+        <button class="reset-btn" onclick="resetGrid()">Alles Löschen</button>
+        <select id="speed">
+            <option value="500">Normal</option>
+            <option value="200">Schnell</option>
+            <option value="1000">Langsam</option>
+        </select>
+    </div>
+
+    <canvas id="gridCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gridCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const statusText = document.getElementById('statusText');
+        const speedSelect = document.getElementById('speed');
+        
+        const CELL_SIZE = 30; 
+        const COLS = 20;
+        const ROWS = 20;
+        
+        canvas.width = COLS * CELL_SIZE;
+        canvas.height = ROWS * CELL_SIZE;
+
+        let grid = Array.from({ length: COLS }, () => Array(ROWS).fill(0));
+        let isRunning = false;
+        let timer = null;
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < COLS; i++) {
+                for (let j = 0; j < ROWS; j++) {
+                    ctx.beginPath();
+                    ctx.rect(i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    
+                    if (grid[i][j] === 1) ctx.fillStyle = 'yellow';
+                    else if (grid[i][j] === 2) ctx.fillStyle = '#3498db'; // Blau
+                    else ctx.fillStyle = 'white';
+                    
+                    ctx.fill();
+                    ctx.strokeStyle = '#eee';
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function computeNextStep() {
+            let nextGrid = Array.from({ length: COLS }, () => Array(ROWS).fill(0));
+
+            for (let i = 0; i < COLS; i++) {
+                for (let j = 0; j < ROWS; j++) {
+                    const currentState = grid[i][j];
+                    let yellowNeighbors = 0;
+
+                    // Nachbarn zählen
+                    for (let ni = -1; ni <= 1; ni++) {
+                        for (let nj = -1; nj <= 1; nj++) {
+                            if (ni === 0 && nj === 0) continue;
+                            let ci = i + ni;
+                            let cj = j + nj;
+                            if (ci >= 0 && ci < COLS && cj >= 0 && cj < ROWS) {
+                                if (grid[ci][cj] === 1) yellowNeighbors++;
+                            }
+                        }
+                    }
+
+                    // REGEL-LOGIK
+                    if (yellowNeighbors === 3) {
+                        nextGrid[i][j] = 1; // Wird/Bleibt Gelb
+                    } else if (currentState === 1) {
+                        nextGrid[i][j] = 2; // Gelb ohne 3 Nachbarn -> Blau
+                    } else if (currentState === 2) {
+                        nextGrid[i][j] = 0; // Blau -> Weiß
+                    }
+                }
+            }
+            grid = nextGrid;
+            draw();
+        }
+
+        // Interaktion: Muster zeichnen
+        canvas.addEventListener('click', e => {
+            if (isRunning) return; // Während der Simulation nicht zeichnen
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / CELL_SIZE);
+            const y = Math.floor((e.clientY - rect.top) / CELL_SIZE);
+            
+            // Klick macht Zelle Gelb, zweiter Klick wieder Weiß
+            grid[x][y] = (grid[x][y] === 1) ? 0 : 1;
+            draw();
+        });
+
+        // Start / Stop Logik
+        startBtn.onclick = function() {
+            isRunning = !isRunning;
+            if (isRunning) {
+                this.innerText = "Simulation Stoppen";
+                this.classList.add('running');
+                statusText.innerText = "Modus: Simulation läuft...";
+                runSimulation();
+            } else {
+                this.innerText = "Simulation Fortsetzen";
+                this.classList.remove('running');
+                statusText.innerText = "Modus: Pausiert (Editieren möglich)";
+                clearTimeout(timer);
+            }
+        };
+
+        function runSimulation() {
+            if (!isRunning) return;
+            computeNextStep();
+            timer = setTimeout(runSimulation, parseInt(speedSelect.value));
+        }
+
+        function resetGrid() {
+            isRunning = false;
+            clearTimeout(timer);
+            startBtn.innerText = "Simulation Starten";
+            startBtn.classList.remove('running');
+            statusText.innerText = "Modus: Editor (Klicke auf die Zellen)";
+            grid = Array.from({ length: COLS }, () => Array(ROWS).fill(0));
+            draw();
+        }
+
+        // Initiales Zeichnen des leeren Gitters
+        draw();
+    </script>
+</body>
+</html>
