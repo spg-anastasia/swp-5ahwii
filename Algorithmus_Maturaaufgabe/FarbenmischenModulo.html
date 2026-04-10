@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Farbenmischen</title>
+    </head>
+    <body>
+        <h1>Farbenmischen</h1>
+
+        <label for="Startfarbe">Startfarbe:</label>
+        <input type="number" id="Startfarbe">
+
+        <label for="Mischfarbe">Mischfarbe:</label>
+        <input type="number" id="Mischfarbe">
+
+        <label for="colorInputA">Farbe A:</label>
+        <input type="number" id="colorInputA">
+
+        <label for="colorInputB">Farbe B:</label>
+        <input type="number" id="colorInputB">
+
+        <button onclick="mixColors()" id="mixButton">Berechnen</button>
+
+        <p id="resultA">Ergebnis A: -</p>
+        <p id="resultB">Ergebnis B: -</p>
+        <p id="commonA">Common A: -</p>
+        <p id="commonB">Common B: -</p>
+
+        <script>
+            function mixColors() {
+                let resultLabelA = document.getElementById("resultA");
+                let resultLabelB = document.getElementById("resultB");
+                let commonALabel = document.getElementById("commonA");
+                let commonBLabel = document.getElementById("commonB");
+
+                try {
+                    let startfarbe = BigInt(document.getElementById("Startfarbe").value);
+                    let mischfarbe = BigInt(document.getElementById("Mischfarbe").value);
+                    let geheimA = BigInt(document.getElementById("colorInputA").value);
+                    let geheimB = BigInt(document.getElementById("colorInputB").value);
+
+                    if (startfarbe <= 0n || mischfarbe < 0n || geheimA < 0n || geheimB < 0n) {
+                        throw new Error("Gültige ganze Zahlen eingeben.");
+                    }
+
+                    let ergebnisA = (mischfarbe ** geheimA) % startfarbe;
+                    let ergebnisB = (mischfarbe ** geheimB) % startfarbe;
+                    let commonAValue = (ergebnisB ** geheimA) % startfarbe;
+                    let commonBValue = (ergebnisA ** geheimB) % startfarbe;
+
+                    resultLabelA.textContent = `Ergebnis A: ${ergebnisA.toString()}`;
+                    resultLabelB.textContent = `Ergebnis B: ${ergebnisB.toString()}`;
+                    commonALabel.textContent = `Gemeinsame Farbe A: ${commonAValue.toString()}`;
+                    commonBLabel.textContent = `Gemeinsame Farbe B: ${commonBValue.toString()}`;
+                } catch (_error) {
+                    resultLabelA.textContent = "Ergebnis A: Gültige ganze Zahlen eingeben.";
+                    resultLabelB.textContent = "Ergebnis B: Gültige ganze Zahlen eingeben.";
+                    commonALabel.textContent = "Gemeinsame Farbe A: -";
+                    commonBLabel.textContent = "Gemeinsame Farbe B: -";
+                }
+            }
+        </script>
+    </body>
+</html>

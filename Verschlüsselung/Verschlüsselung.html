@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verschlüsselung</title>
+</head>
+<body>
+    <h1>Verschlüsselung</h1>
+    <input type="text" id="inputText" placeholder="Geben Sie den Text ein">
+    <output id="outputText"></output>
+    <input type="text" id="chiffre-number" placeholder="Geben Sie die Chiffre-Nummer ein">
+    <button onclick="encrypt()">Verschlüsseln</button>
+    <button onclick="decrypt()">Entschlüsseln</button>
+    <button onclick="reset()">Zurücksetzen</button>
+</body>
+</html>
+<script>
+    function encrypt(){
+        let inputText =document.getElementById("inputText").value;
+        let chiffreNumber = parseInt(document.getElementById("chiffre-number").value) || 0;
+        chiffreNumber = ((chiffreNumber % 26) + 26) % 26; 
+        let outputText = "";
+        for(let i = 0; i < inputText.length; i++){
+            let charCode = inputText.charCodeAt(i);
+            if(charCode >= 97 && charCode <= 122){
+                let text_i = charCode - 97;
+                let verschluesselt = (text_i + chiffreNumber) % 26;
+                outputText += String.fromCharCode(verschluesselt + 97);
+            } else if (charCode >= 65 && charCode <= 90){
+                let text_i = charCode - 65;
+                let verschluesselt = (text_i + chiffreNumber) % 26;
+                outputText += String.fromCharCode(verschluesselt + 65);
+            } else {
+                outputText += inputText.charAt(i);
+            }
+        }
+        document.getElementById("outputText").value = outputText;
+    }   
+    function decrypt(){
+        let inputText =document.getElementById("inputText").value;
+        let chiffreNumber = parseInt(document.getElementById("chiffre-number").value) || 0;
+        chiffreNumber = ((chiffreNumber % 26) + 26) % 26;
+        let outputText = "";
+        for(let i = 0; i < inputText.length; i++){
+            let charCode = inputText.charCodeAt(i);
+            if(charCode >= 97 && charCode <= 122){
+                let text_i = charCode - 97;
+                let entschluesselt = (text_i - chiffreNumber + 26) % 26;
+                outputText += String.fromCharCode(entschluesselt + 97);
+            } else if (charCode >= 65 && charCode <= 90){
+                let text_i = charCode - 65;
+                let entschluesselt = (text_i - chiffreNumber + 26) % 26;
+                outputText += String.fromCharCode(entschluesselt + 65);
+            } else {
+                outputText += inputText.charAt(i);
+            }
+        }
+        document.getElementById("outputText").value = outputText;
+    }
+    function reset(){
+        document.getElementById("inputText").value = "";
+        document.getElementById("outputText").value = "";
+        document.getElementById("chiffre-number").value = "";
+    }
+</script>
